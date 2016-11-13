@@ -67,6 +67,14 @@ static void read_matlab_solution( char *, mwSize *, pastix_float_t **);
 static void write_matlab_solution(char *, char *, int , double *);
 static void read_nx(char *, mwSize *);
 
+static void
+usage(int argc, char *argv[])
+{
+    fprintf( stderr,
+    "usage: mpirun -np <num_slots> %s <mat_file> [ <params_file> ]\n"
+            , argv[0] );
+}
+
 int main (int argc, char **argv)
 {
 
@@ -103,6 +111,11 @@ int main (int argc, char **argv)
   pastix_int_t    mat_type;
   long            i;
   pastix_int_t     globn;
+
+  if (argc == 1) {
+      usage(argc, argv);
+      exit(2);
+  }
   /*******************************************/
   /*          MPI initialisation             */
   /*******************************************/
@@ -330,7 +343,7 @@ int main (int argc, char **argv)
       double *data = CALLOC(double, num_coord);
       for (i=0; i< num_coord; i++)
           data[i] = (double)rhs[i];
-      sprintf(mat_file_name, "%s/x_%d.mat", getenv("PASTIX_DATA"), mpid +1);
+      sprintf(mat_file_name, "x_%d.mat", mpid +1);
 //    fprintf(stderr, "mat_file_name=%s\n", mat_file_name);                 
       write_matlab_solution(mat_file_name, "x", num_coord, data);
       FREE(data);

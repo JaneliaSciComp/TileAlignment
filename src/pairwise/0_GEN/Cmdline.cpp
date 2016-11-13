@@ -6,9 +6,10 @@
 #include	<stdlib.h>
 #include	<string.h>
 
+#include        <curl/curl.h>
+#include        <sstream>
 
-
-
+#include        <iostream>
 
 
 /* --------------------------------------------------------------- */
@@ -28,7 +29,7 @@
 //
 bool IsArg( const char *pat, const char *argv )
 {
-    return !strcmp( argv, pat );
+	return !strcmp( argv, pat );
 }
 
 /* --------------------------------------------------------------- */
@@ -50,7 +51,7 @@ bool IsArg( const char *pat, const char *argv )
 //
 bool GetArg( void *v, const char *pat, const char *argv )
 {
-    return 1 == sscanf( argv, pat, v );
+	return 1 == sscanf( argv, pat, v );
 }
 
 /* --------------------------------------------------------------- */
@@ -72,15 +73,16 @@ bool GetArg( void *v, const char *pat, const char *argv )
 //
 bool GetArgStr( const char* &s, const char *pat, char *argv )
 {
-    int	len = strlen( pat );
+	int		len = strlen( pat );
+	bool	ok = false;
 
-    if( !strncmp( argv, pat, len ) ) {
+	if( !strncmp( argv, pat, len ) ) {
 
-        s = argv + len;
-        return true;
-    }
+		s  = argv + len;
+		ok = true;
+	}
 
-    return false;
+	return ok;
 }
 
 /* --------------------------------------------------------------- */
@@ -102,23 +104,24 @@ bool GetArgStr( const char* &s, const char *pat, char *argv )
 //
 bool GetArgList( vector<int> &v, const char *pat, char *argv )
 {
-    int	len = strlen( pat );
+	int		len = strlen( pat );
+	bool	ok = false;
 
-    if( !strncmp( argv, pat, len ) ) {
+	if( !strncmp( argv, pat, len ) ) {
 
-        char	*s = strtok( argv + len, ":;, " );
+		char	*s = strtok( argv + len, ":;, " );
 
-        v.clear();
+		v.clear();
 
-        while( s ) {
-            v.push_back( atoi( s ) );
-            s = strtok( NULL, ":;, " );
-        }
+		while( s ) {
+			v.push_back( atoi( s ) );
+			s = strtok( NULL, ":;, " );
+		}
 
-        return true;
-    }
+		ok = true;
+	}
 
-    return false;
+	return ok;
 }
 
 // Read double argument list from command line.
@@ -136,23 +139,136 @@ bool GetArgList( vector<int> &v, const char *pat, char *argv )
 //
 bool GetArgList( vector<double> &v, const char *pat, char *argv )
 {
-    int	len = strlen( pat );
+	int		len = strlen( pat );
+	bool	ok = false;
 
-    if( !strncmp( argv, pat, len ) ) {
+	if( strstr(argv, "http:") == NULL && !strncmp( argv, pat, len ) ) {
 
-        char	*s = strtok( argv + len, ":;, " );
+		char	*s = strtok( argv + len, ":;, " );
 
-        v.clear();
+		v.clear();
 
-        while( s ) {
-            v.push_back( atof( s ) );
-            s = strtok( NULL, ":;, " );
-        }
+		while( s ) {
+			v.push_back( atof( s ) );
+			s = strtok( NULL, ":;, " );
+		}
 
-        return true;
-    }
+		ok = true;
+	}
 
-    return false;
+	return ok;
 }
 
+void Tokenize(const string& str, vector<string>& tokens,
+              const string& delimiters = "\n")
+{
+     // Skip delimiters at beginning.
+     string::size_type lastPos = str.find_first_not_of(delimiters, 0);
+     // Find first "non-delimiter".
+     string::size_type pos     = str.find_first_of(delimiters, lastPos);
+
+     while (string::npos != pos || string::npos != lastPos)
+     {
+         // Found a token, add it to the vector.
+         tokens.push_back(str.substr(lastPos, pos - lastPos));
+         // Skip delimiters.  Note the "not_of"
+         lastPos = str.find_first_not_of(delimiters, pos);
+         // Find next "non-delimiter"
+         pos = str.find_first_of(delimiters, lastPos);
+     }
+}
+
+static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
+{
+    ((std::string*)userp)->append((char*)contents, size * nmemb);
+    return size * nmemb;
+}
+
+
+bool GetArgListFromURL( vector<double> &v, const char *pat, char *argv )
+{
+    int     len = strlen( pat );
+    bool    ok = false;
+
+    if ( strstr(argv, "http:") != NULL && !strncmp( argv, pat, len ) ) 
+    {
+
+        char *url = argv + len;
+        static std::string readBuffer;
+
+        if (strstr(url, "http:") == NULL)
+            return false;
+
+        CURL *easy_handle;
+        CURLcode res;
+
+        easy_handle = curl_easy_init();
+
+//      curl_easy_setopt(easy_handle, CURLOPT_VERBOSE,    1L);
+        curl_easy_setopt(easy_handle, CURLOPT_URL, url);
+        readBuffer.clear();
+        curl_easy_setopt(easy_handle, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(easy_handle, CURLOPT_WRITEDATA, &readBuffer);
+        res = curl_easy_perform(easy_handle);
+        curl_easy_cleanup(easy_handle);
+
+        vector<string> tokens;
+
+        int read_images_from_URLs = 0;
+        double coeffs[] = {0., 0., 0., 0., 0, 0.};
+
+        Tokenize(std::string(readBuffer), tokens, "\n");
+        for (int i=0; i<tokens.size(); i++)
+        {
+            vector<string> tokens2;
+            Tokenize(tokens[i], tokens2, " ");
+
+            if ( tokens2[0].find("imageRow") != std::string::npos ) {
+                const char *my_str    = tokens2[2].c_str();
+                char *pEnd;
+                double value = strtod(my_str, &pEnd);
+                coeffs[3] = value;
+            }
+
+            if ( tokens2[0].find("imageCol") != std::string::npos ) {
+                const char *my_str    = tokens2[2].c_str();
+                char *pEnd;
+                double value = strtod(my_str, &pEnd);
+                coeffs[0] = value;
+            }
+
+            if ( tokens2[0].find("minX") != std::string::npos ) {
+                const char *my_str    = tokens2[2].c_str();
+                char *pEnd;
+                double value = strtod(my_str, &pEnd);
+                coeffs[1] = value;
+            }
+
+            if ( tokens2[0].find("minY") != std::string::npos ) {
+                const char *my_str    = tokens2[2].c_str();
+                char *pEnd;
+                double value = strtod(my_str, &pEnd);
+                coeffs[4] = value;
+            }
+
+            if ( tokens2[0].find("stageX") != std::string::npos ) {
+                const char *my_str    = tokens2[2].c_str();
+                char *pEnd;
+                double value = strtod(my_str, &pEnd);
+                coeffs[2] = value;
+            }
+
+            if ( tokens2[0].find("stageY") != std::string::npos ) {
+                const char *my_str    = tokens2[2].c_str();
+                char *pEnd;
+                double value = strtod(my_str, &pEnd);
+                coeffs[5] = value;
+            }
+        }
+        v.assign (coeffs,coeffs+6);
+        readBuffer.clear();
+        ok = true;
+    }
+    return ok;
+}
 

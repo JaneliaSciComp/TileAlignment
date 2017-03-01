@@ -307,8 +307,6 @@ int main (int argc, char **argv)
   CHECK_DIST_SOL(colptr, rows, values, rhs, ncol, loc2glob, globn, rhssaved_g);
 
 
-  fprintf(stderr, "Writing the solution to MAT file...\n");
-
   /* Compare thge result with Matlab's stored solution  */
   pastix_float_t *xvals       = NULL;
   mwSize nx;
@@ -322,8 +320,6 @@ int main (int argc, char **argv)
   sprintf(filename1, "%s_%d.mat", filename1, mpid + 1);
   read_nx(filename1, &nx);
  
-  fprintf(stderr, "mpid=%d nx=%d\n", mpid, nx);
-
   tiles_per_node = round((float)nx/6./(float)num_nodes);
   col_min = 1 + 6*(mpid * tiles_per_node);
   if (mpid < num_nodes-1) {
@@ -333,11 +329,8 @@ int main (int argc, char **argv)
   }
   num_coord = col_max - col_min +1;
 
-  fprintf(stderr, "mpid=%d num_coord=%d\n", mpid, num_coord);
-
   char mat_file_name[256];           
   double *data = CALLOC(double, num_coord);
-  fprintf(stderr, "Point 1\n");
   for (i=0; i< num_coord; i++)
       data[i] = (double)rhs[i];
   if (strlen(getenv("TA_DATA")) > 0) {

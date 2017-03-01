@@ -7,7 +7,7 @@ echo "-------------------------------------------"
 
 export SCOTCH_HOME=/usr/local/scotch_6.0.4
 export export PASTIX_ROOT=/usr/local/pastix_5.2.2.22
-LIBS="-L/home/denisovg/lib64 -L$PASTIX_ROOT/lib -lpastix -lifcore -lm -lrt -L/usr/local/scotch_6.0.4/lib -lscotch -lscotcherr -lscotcherrexit -lptscotch  -lptscotcherr  -lptscotcherrexit  -L/usr/local/hwloc-1.11.3/lib -lhwloc -lpthread -L$PASTIX_ROOT/install -L/usr/local/INTEL-2016/compilers_and_libraries_2016.2.181/linux/mpi/intel64/lib -L/usr/local/matlab-2016a/extern/lib/glnxa64 -L/usr/local/matlab-2016a/bin/glnxa64 -lstdc++ -lmatrix_driver -lmat -lmx -lmex";
+LIBS="-L$HOME/lib64 -L$PASTIX_ROOT/lib -lpastix -lifcore -lm -lrt -L/usr/local/scotch_6.0.4/lib -lscotch -lscotcherr -lscotcherrexit -lptscotch  -lptscotcherr  -lptscotcherrexit  -L/usr/local/hwloc-1.11.3/lib -lhwloc -lpthread -L$PASTIX_ROOT/install -L/usr/local/INTEL-2016/compilers_and_libraries_2016.2.181/linux/mpi/intel64/lib -L/usr/local/matlab-2016a/extern/lib/glnxa64 -L/usr/local/matlab-2016a/bin/glnxa64 -lstdc++ -lmatrix_driver -lmat -lmx -lmex";
 INC="-I$PASTIX_ROOT/include -I$PASTIX_ROOT/src/example/src -I/usr/local/matlab-2016a/extern/include";
 CC="mpicc -cc=icc -Wall -Wl,-rpath,'$ORIGIN";
 CXX="mpicxx -cxx=icpc -Wall -Wl,-rpath,'$ORIGIN"
@@ -96,9 +96,9 @@ else
     echo -e $usage
 fi;
 
-echo "$CC align_tiles_split.c $INC $LIBS $CCOPT $OPTS $BLAS  -o align_tiles_split_pastix"
+echo "$CC align_tiles_split.c $INC $LIBS $CCOPT $OPTS $BLAS  -o ../../bin/align_tiles_split"
 
-mpicc align_tiles_split.c /home/denisovg/lib64/libstdc++.so.6 $INC $LIBS $CCOPT $OPTS $BLAS  -o align_tiles_split_pastix
+mpicc align_tiles_split.c $INC $LIBS $CCOPT $OPTS $BLAS  -o ../../bin/align_tiles_split
 
 
 

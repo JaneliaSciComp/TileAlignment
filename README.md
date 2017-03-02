@@ -1,6 +1,8 @@
 Janelia Research Campus
 -----------------------
 
+![jrc_logo_180x40](https://cloud.githubusercontent.com/assets/1093770/23528799/206de32e-ff69-11e6-9fac-38bac908aed1.png)
+
 Copyright (c) 2017, HHMI-Janelia Research Campus
 All rights reserved.
 

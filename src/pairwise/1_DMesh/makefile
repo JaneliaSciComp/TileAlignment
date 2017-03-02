@@ -2,8 +2,6 @@ include $(TA_HOME)/src/pairwise/aln_makefile_std_defs
 
 CFLAGS += -DCREATEMESH_WRITE_DEBUG_IMAGES
 
-appname = align2
-
 files =\
  ApproximateMatch_NoCR.cpp\
  ApproximateMatch.cpp\
@@ -18,11 +16,12 @@ files =\
 
 objs = ${files:.cpp=.o}
 
-all : $(appname)
+all : align2     
 
 clean :
 	rm -f *.o
 
-$(appname) : .CHECK_GENLIB ${objs}
+align2: .CHECK_GENLIB ${objs}
+	@mkdir -p ../../../bin
 	$(CC) $(LFLAGS) ${objs} $(LINKS_STD) $(OUTPUT)
 

@@ -3,10 +3,13 @@
 
 SUBDIRS = src/pairwise src/multi-tile_pastix 
 
-all:
-	for dir in $(SUBDIRS); \
-            do (cd $$dir; $(MAKE) $@); \
-        done
+all: align2 align_multi
+
+align2:
+	cd src/pairwise; $(MAKE) all;
+
+align_multi:
+	cd src/multi-tile_pastix; $(MAKE) all;                    
 	 
 clean:
 	cd src/pairwise; $(MAKE) clean

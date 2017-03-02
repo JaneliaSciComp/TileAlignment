@@ -137,19 +137,8 @@ INCLUDES_STD := -I{$(PATH_TIF_INC),$(PATH_PNG_INC),$(PATH_FFT_INC),$(PATH_GEN),$
 # rt:		posix libraries (e.g. semaphore support)
 # curl:		libcurl parser for Janelia command lines
 
-USING_CURL := 0
-
-ifeq ($(USING_CURL), 1)
-
 OTHERLIBS_STD := -pthread -l{jpeg,m,c,rt,curl}
 FLAGS_URL     := -DUSE_CURL
-
-else
-
-OTHERLIBS_STD := -pthread -l{jpeg,m,c,rt}
-FLAGS_URL     :=
-
-endif
 
 # ==============================
 # combine all standard libraries

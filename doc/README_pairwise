@@ -1,0 +1,41 @@
+To see the usage of an executable produced from the code stored in folder src/pairwise, type the name of the executable:
+
+$ align2 
+
+Usage: align2 argument(s) [ options ], where
+    Where argument(s) == one of
+           <imageA_file> <imageB_file> // read inputs from local files
+           <imageA_URL>  <imageB_URL>  // read inputs from URLs
+
+    If argument(s) ==  <imageA_file> <imageB_file>
+    then options ==
+      -h
+      -Tab=<six comma-separated values or URL>
+      -matchparams_file=<path>
+      -pts_file=<path>
+      -comp_file=<path>
+      -registered_file=<path>
+
+    If argument(s) ==  <imageA_URL> <imageB_URL>
+    then options ==
+      -h
+      -Ta=<URL for affine coefficients for imageA>
+      -Tb=<URL for affine coefficients for imageB>
+      -matchparams_file=<path>
+      -pts_file=<path>
+      -comp_file=<path>
+      -registered_file=<path>
+
+An example of running this executable using the data from folder sample_data:
+
+  align2 tile_A.tif tile_B.tif -z=0,0 -Ta=1,0,129562,0,1,51127 -Tb=1,0,129562,0,1,52977 -pts_file=stdout -matchparams_file=align2_params.txt  2> res
+
+Console output:
+{
+    "matches": {
+        "p": [[161.3744,309.6879,658.5862,809.3687,1172.6812,1332.7366,1667.0938,1838.6667,2175.9529,2338.4988],[1945.8984,2062.1443,1941.6962,2063.4812,1947.9454,2057.4863,1942.0104,2056.8889,1944.2388,2058.9648]],
+        "q": [[208.0068,351.6940,700.0909,847.4991,1210.3528,1367.8822,1701.3550,1871.1016,2207.1267,2368.5449],[112.4286,226.0385,99.8984,220.2299,101.5851,210.3320,94.0437,209.0851,97.9899,212.9457]],
+        "w": [1,1,1,1,1,1,1,1,1,1]
+    }
+}
+

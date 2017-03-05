@@ -1,0 +1,120 @@
+The adapter code in folder 'src/multi-tile_pastix' is intended to be used for solving a large sparse system of linear algebraic equations resulting from simultaneous alignment of multiple tiles using a distributed version of a linear solver PaStiX  (http://pastix.gforge.inria.fr). The code reads the sparse input matrix and the right-hand side from MAT file(s) and produces a solution as a set of vectors, each the vector produced by a separate MPI worker on SGE cluster and stored in a separate MAT file. Being concatenated, the vectors constitute the complete solution vector. A small, but working example of the input MAT file is available in the folder ../../sample_data.  
+PaStiX makes use of either Scotch (https://gforge.inria.fr/projects/scotch) or Metis software to perform reordering of columns in a linear system. In our current development, Scotch and PT-Scotch have been used. According to
+   https://gforge.inria.fr/forum/forum.php?thread_id=33353&forum_id=599&group_id=186,
+
+the use of a 32-bit version of PaStiX is recommended to ensure compatibility
+with Scotch. The 32-bit version can be produced by using a compiler flag -DINTSIZE32.
+In our current development, the 32-bit version of PaStiX has been used.
+
+Listed below are several tips for building a distributed version of PaStiX:
+1) add these lines to ~/.bashrc:
+       # Use Intel compiler for MPI
+       if [ -f /usr/local/INTEL2016.sh ]; then
+            . /usr/local/INTEL2016.sh
+       fi
+       export I_MPI_FABRICS=shm:ofa
+       export I_MPI_FALLBACK=disable
+2) use Pastix that was compileed with options:
+    -DFORCE_NOMPI
+    -DDISTRIBUTED.
+3) use PT-Scotch, i.e. with libraries:
+   libptscotch.a  libptscotcherr.a  libptscotcherrexit.a
+   (in addition to: libscotch.a  libscotcherr.a  libscotcherrexit.a)
+
+The compiled alignment code stored in ../../bin can be run in two modes: a 'non-split' and a 'plit' mode. In either case, the following environment variables are expected to be defined:
+TA_HOME, containing the full path to the folder 'bin', and
+TA_DATA, a writable directory from where the input MAT file(s) will be read and where the solution will be stored.
+The procedure described below shows how to run the code from within a qlogin session started using the command:
+     qlogin -pe impi <num_workers> -now n
+where <num_workers> is the number of MPI workers to be used.
+
+1) Non-split mode: the same entire MAT file is used as input by each MPI worker.
+This mode makes use of the files: align_tiles, align_tiles.sh and run_align_tiles.sh.
+The command to run the code:
+    align_tiles.sh  <num_workers>  <input MAT file> [ <parameter file> ] 
+An example of the parameter file is /sample_data/align_multi_params.txt.
+    
+2) Split mode: each MPI worker is using as input a separate portion of the MAT file. Splitting of the original MAT file into <num_workers> portions can be performed by the provided Matlab script split_mat_file.m:
+    >> split_mat_file(<entire MAT file name>, <num_workers>)
+Given the entire MAT file  named <file_name>.mat, its portions will be named <file_name>_1.mat, <file_name>_2.mat, etc.
+This mode makes use of the files: align_tiles_split, align_tiles_split.sh and       run_align_tiles_split.sh. The command to run the code is:
+   align_tiles_split.sh  <num_workers>  <input MAT file> [ <parameter file> ]
+(Note that the name of the entire input MAT file is specified in this command, although the portions of this file will be actually used by the MPI workers, and the entire MAT file may even not exist). 
+
+The solution produced by either mode will be stored in the files 
+    x_1.mat,  . , x_<num_workers>.mat 
+located in the folder TA_DATA.
+
+An example of running the code in the split mode on data located in folder TA_DATA=../../sample_data:
+    $TA_BIN/align_tiles_split.sh  3  $TA_DATA/ntiles34_axb.mat 
+
+Console output :
+
+MPI_Init_thread level = MPI_THREAD_MULTIPLE
+Check : Numbering               OK
+Check : Sort CSC                OK
+Check : Duplicates              OK
+ +--------------------------------------------------------------------+
+ +              PaStiX : Parallel Sparse matriX package               +
+ +--------------------------------------------------------------------+
+  Matrix size                                   204 x 204
+  Number of nonzeros in A                       1200
+ +--------------------------------------------------------------------+
+ +  Options                                                           +
+ +--------------------------------------------------------------------+
+        Version             :                   5.2.2.22
+        SMP_SOPALIN         :                   Defined
+        VERSION MPI         :                   Defined
+        PASTIX_DYNSCHED     :                   Not defined
+        STATS_SOPALIN       :                   Not defined
+        NAPA_SOPALIN        :                   Defined
+        TEST_IRECV          :                   Not defined
+        TEST_ISEND          :                   Defined
+        TAG                 :                   Exact Thread
+        FORCE_CONSO         :                   Not defined
+        RECV_FANIN_OR_BLOCK :                   Not defined
+        OUT_OF_CORE         :                   Not defined
+        DISTRIBUTED         :                   Defined
+        METIS               :                   Not defined
+        WITH_SCOTCH         :                   Defined
+        INTEGER TYPE        :                   int32_t
+        PASTIX_FLOAT TYPE   :                   double
+ +--------------------------------------------------------------------+
+   Time to compute ordering                     0.00184 s
+Time to find the supernode (direct) 7.61e-05 s
+Number of supernode for direct factorization 49
+Level of fill = -1
+Amalgamation ratio = 50
+Time to compute scalar symbolic direct factorization  4.34e-05 s
+Scalar nnza = 1200 nnzlk = 2549, fillrate0 = 2.12
+Time to compute the amalgamation of supernodes 0.000102 s
+Number of cblk in the amalgamated symbol matrix = 10
+
+
+Number of block in the non patched symbol matrix = 30
+Number of non zero in the non patched symbol matrix = 3954, fillrate1 3.29
+Number of block in final symbol matrix = 30
+Number of non zero in final symbol matrix = 3954, fillrate2 3.29
+   Time to analyze                              0.000182 s
+   Number of nonzeros in factorized matrix      3786
+   Fill-in                                      3.155
+   Number of operations (LLt)                   104422
+   Prediction Time to factorize (AMD 6180  MKL) 8.75e-05 s
+   --- Sopalin : Threads are binded                 ---
+    - iteration 1 :
+         time to solve                          0 s
+         total iteration time                   0.00438 s
+         error                                  9.0399e-11
+    - iteration 2 :
+         time to solve                          0 s
+         total iteration time                   0.00186 s
+         error                                  6.2426e-17
+   Static pivoting                              0
+   Inertia                                      204
+   Time to factorize                            0.0219 s
+   FLOPS during factorization                   4.5421 MFLOPS
+   Time to solve                                0.000771 s
+   Refinement                                   2 iterations, norm=6.24e-17
+   Time for refinement                          0.00831 s
+Precision : ||ax -b||/||b|| = 187167.80585613768199
+

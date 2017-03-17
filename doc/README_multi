@@ -28,7 +28,7 @@ The procedure described below shows how to run the code from within a qlogin ses
      qlogin -pe impi <num_workers> -now n
 where <num_workers> is the number of MPI workers to be used.
 
-1) Split mode: each MPI worker is using as input a separate portion of the MAT file. Splitting of the original MAT file into <num_workers> portions can be performed by the provided Matlab script split_mat_file.m:
+1) Split mode (default): each MPI worker is using as input a separate portion of the MAT file. Splitting of the original MAT file into <num_workers> portions can be performed by the provided Matlab script split_mat_file.m:
     >> split_mat_file(<entire MAT file name>, <num_workers>)
 Given the entire MAT file named <file_name>.mat, its portions will be named <file_name>_1.mat, <file_name>_2.mat, etc.
 This mode makes use of the files: align_multi, align_multi.sh and run_align_multi.sh. The command to run the code is:

@@ -1,5 +1,11 @@
-The adapter code in folder 'src/multi-tile_pastix' is intended to be used for solving a large sparse system of linear algebraic equations resulting from simultaneous alignment of multiple tiles using a distributed version of a linear solver PaStiX  (http://pastix.gforge.inria.fr). The code reads the sparse input matrix and the right-hand side from MAT file(s) and produces a solution as a set of vectors, each the vector produced by a separate MPI worker on SGE cluster and stored in a separate MAT file. Being concatenated, the vectors constitute the complete solution vector. A small, but working example of the input MAT file is available in the folder ../../sample_data.  
-PaStiX makes use of either Scotch (https://gforge.inria.fr/projects/scotch) or Metis software to perform reordering of columns in a linear system. In our current development, Scotch and PT-Scotch have been used. According to
+The adapter code in folder 'src/multi-tile_pastix' is intended to be used for solving a large sparse system of linear 
+algebraic equations resulting from simultaneous alignment of multiple tiles using a distributed version of a linear solver 
+PaStiX  (http://pastix.gforge.inria.fr). The code reads the sparse input matrix and the right-hand side from MAT file(s) and 
+produces a solution as a set of vectors, each the vector produced by a separate MPI worker on SGE cluster and stored in a 
+separate MAT file. Being concatenated, the vectors constitute the complete solution vector. A small, but working example 
+of the input MAT file is available in the folder ../../sample_data.  
+PaStiX makes use of either Scotch (https://gforge.inria.fr/projects/scotch) or Metis software to perform reordering of 
+columns in a linear system. In our current development, Scotch and PT-Scotch have been used. According to
    https://gforge.inria.fr/forum/forum.php?thread_id=33353&forum_id=599&group_id=186,
 
 the use of a 32-bit version of PaStiX is recommended to ensure compatibility
@@ -21,19 +27,22 @@ Listed below are several tips for building a distributed version of PaStiX:
    libptscotch.a  libptscotcherr.a  libptscotcherrexit.a
    (in addition to: libscotch.a  libscotcherr.a  libscotcherrexit.a)
 
-The compiled alignment code stored in ../../bin can be run in two modes: a 'split' mode (default) and a 'nosplit' mode. In either case, the following environment variables are expected to be defined:
+The compiled alignment code stored in ../../bin can be run in two modes: a 'split' mode (default) and a 'nosplit' mode. 
+In either case, the following environment variables are expected to be defined:
 TA_HOME, containing the full path to the folder 'bin', and
 TA_DATA, a writable directory from where the input MAT file(s) will be read and where the solution will be stored.
 The procedure described below shows how to run the code from within a qlogin session started using the command:
      qlogin -pe impi <num_workers> -now n
 where <num_workers> is the number of MPI workers to be used.
 
-1) Split mode (default): each MPI worker is using as input a separate portion of the MAT file. Splitting of the original MAT file into <num_workers> portions can be performed by the provided Matlab script split_mat_file.m:
+1) Split mode (default): each MPI worker is using as input a separate portion of the MAT file. Splitting of the original MAT 
+file into <num_workers> portions can be performed by the provided Matlab script split_mat_file.m:
     >> split_mat_file(<entire MAT file name>, <num_workers>)
 Given the entire MAT file named <file_name>.mat, its portions will be named <file_name>_1.mat, <file_name>_2.mat, etc.
 This mode makes use of the files: align_multi, align_multi.sh and run_align_multi.sh. The command to run the code is:
    align_multi.sh  <num_workers>  <input MAT file> [ <parameter file> ]
-(Note that the name of the entire input MAT file is specified in this command, although the portions of this file will be actually used by the MPI workers, and the entire MAT file may even not exist). 
+(Note that the name of the entire input MAT file is specified in this command, although the portions of this file will 
+be actually used by the MPI workers, and the entire MAT file may even not exist). 
 
 2) Non-split mode: the same entire MAT file is used as input by each MPI worker.
 This mode makes use of the files: align_multi_nosplits, align_multi_nosplit.sh and run_align_multi_nosplit.sh.

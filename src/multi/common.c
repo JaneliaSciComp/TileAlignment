@@ -1,41 +1,35 @@
+/* Copyright 2008 BORDEAUX I UNIVERSITY & INRIA 
+ **
+ ** This file is part of the PaStiX parallel sparse matrix package.
+ **
+ ** This software is governed by the CeCILL-C license under French law
+ ** and abiding by the rules of distribution of free software. You can
+ ** use, modify and/or redistribute the software under the terms of the
+ ** CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ ** URL: "http://www.cecill.info".
+ ** 
+ ** As a counterpart to the access to the source code and rights to copy,
+ ** modify and redistribute granted by the license, users are provided
+ ** only with a limited warranty and the software's author, the holder of
+ ** the economic rights, and the successive licensors have only limited
+ ** liability.
+ ** 
+ ** In this respect, the user's attention is drawn to the risks associated
+ ** with loading, using, modifying and/or developing or reproducing the
+ ** software by the user in light of its specific status of free software,
+ ** that may mean that it is complicated to manipulate, and that also
+ ** therefore means that it is reserved for developers and experienced
+ ** professionals having in-depth computer knowledge. Users are therefore
+ ** encouraged to load and test the software's suitability as regards
+ ** their requirements in conditions enabling the security of their
+ ** systems and/or data to be ensured and, more generally, to use and
+ ** operate it in the same conditions as regards security.
+ ** 
+ ** The fact that you are presently reading this means that you have had
+ ** knowledge of the CeCILL-C license and that you accept its terms.
+ */
+
 #include "common.h"
-
-int read_nx(char *filename, mwSize *nx)
-{
-    MATFile *pmat;
-    pmat = matOpen(filename, "r");
-
-    mxArray *mxA;
-    mxA  = matGetVariable(pmat, "A");
-
-   *nx = mxGetM(mxA);
-    mxDestroyArray(mxA);
-    matClose(pmat);
-}
-
-int write_matlab_solution(char *fileName, char *varName, int nx, double *xvals)
-{
-    mxArray *xv;
-
-    MATFile *pmat = matOpen(fileName, "w");
-
-    xv = mxCreateDoubleMatrix(1, nx, mxREAL);
-
-    memcpy((void *)(mxGetPr(xv)), (void *)xvals, nx*sizeof(xvals));
-
-    matPutVariable(pmat, varName, xv);
-
-    matClose(pmat);
-}
-
-static void
-usage(int argc, char *argv[])
-{
-    fprintf( stderr,
-    "usage: mpirun -np <num_slots> %s <mat_file> [ <params_file> ]\n"
-            , argv[0] );
-}
-
 
 int main (int argc, char **argv)
 {
@@ -138,13 +132,6 @@ int main (int argc, char **argv)
   dread_matrix(filename[0], &ncol, &colptr, &rows, &loc2glob, &values,
                &rhs, &type, &rhstype, driver_type[0], MPI_COMM_WORLD);
 
-/*
-  fprintf(stdout, "\nmpid=%d Right-hand side:\n", mpid);
-  for (i=0; i<ncol; i++)
-      fprintf(stdout, "%f ", rhs[i]);
-  fprintf(stdout, "\n");
-*/
-
   mat_type = API_SYM_YES;
   //if (MTX_ISSYM(type)) mat_type = API_SYM_YES;
   //if (MTX_ISHER(type)) mat_type = API_SYM_HER;
@@ -175,7 +162,6 @@ int main (int argc, char **argv)
   /*******************************************/
   /*       Customize some parameters         */
   /*******************************************/
-//iparm[IPARM_THREAD_NBR] = nbthread;
   iparm[IPARM_SYM] = API_SYM_YES;
   mat_type = API_SYM_YES;
   switch (mat_type)
@@ -214,15 +200,13 @@ int main (int argc, char **argv)
 //iparm[IPARM_IO_STRATEGY] = API_IO_LOAD; // start from step 3
 //
   /* reread parameters to set IPARM/DPARM */
-  if (EXIT_FAILURE == get_idparm(argc, argv,
-                                 iparm,          dparm))
+  if (EXIT_FAILURE == get_idparm(argc, argv, iparm, dparm))
     return EXIT_FAILURE;
 
   /*******************************************/
   /*           Save the rhs                  */
   /*    (it will be replaced by solution)    */
   /*******************************************/
-//fprintf(stdout, "\nncol=%d sizeof(pastix_float_t)=%d\n", ncol, sizeof(pastix_float_t));
   rhssaved = malloc(ncol*sizeof(pastix_float_t));
   memcpy(rhssaved, rhs, ncol*sizeof(pastix_float_t));
 #ifndef FORCE_NOMPI
@@ -258,9 +242,7 @@ int main (int argc, char **argv)
   dpastix(&pastix_data, MPI_COMM_WORLD,
           ncol, colptr, rows, values, loc2glob,
           perm, NULL, rhs, 1, iparm, dparm);
-//fprintf(stderr, "Printing rhs...\n");
   PRINT_RHS("SOL", rhs, ncol, mpid, iparm[IPARM_VERBOSE]);
-//fprintf(stderr, "Checking solution...\n");
   CHECK_DIST_SOL(colptr, rows, values, rhs, ncol, loc2glob, globn, rhssaved_g);
 
 
@@ -313,20 +295,121 @@ int main (int argc, char **argv)
   free(rows);
   free(values);
   free(rhs);
-//free(rhssaved_g);
-//free(type);
-//free(rhstype);
   free(loc2glob);
 #ifndef FORCE_NOMPI
   MPI_Finalize();
 #endif
   return EXIT_SUCCESS;
 }
-/* File: align_tiles.c
- */
+
+/* -------------------------------------------------------------------------- */
+
+/*
+ *   Function: get_options
+ *
+ *     Get options from argv.
+ *
+ *       Parameters:
+ *           argc          - number of arguments.
+ *           argv          - argument tabular.
+ *           driver_type   - type of driver (output).
+ *           filename      - Matrix filename (output).
+ *           nbthread      - number of thread (left unchanged if not in options).
+ *           verbose       - verbose level 1,2 or 3
+ *           ordering      - ordering to choose (see <API_ORDER>).
+ *           incomplete    - indicate if -incomp is present
+ *           level_of_fill - Level of fill for incomplete factorization.
+ *           amalgamation  - Amalgamation for kass.
+ *           ooc           - Out-of-core limite (Mo or percent depending on compilation option)
+ *           size          - Size of the matrix (generated matrix only)
+ *
+ *                                                        */
+int get_options(int              argc,
+                char           **argv,
+                driver_type_t  **driver_type,
+                char          ***filename,
+                int             *nbmatrices,
+                int             *nbthread,
+                int             *verbosemode,
+                int             *ordering,
+                int             *incomplete,
+                int             *level_of_fill,
+                int             *amalgamation,
+                int             *ooc,
+                pastix_int_t    *size)
+{
+    int i;
+   *driver_type = CALLOC(driver_type_t, 1);
+  (*driver_type)[0] = RSA;
+   *nbmatrices = 1;
+   *nbthread = 32;
+   *incomplete = 0;
+   *level_of_fill = -1;
+   *verbosemode = 1;
+   *ooc = 50000;
+   *amalgamation = 5;
+   *filename = CALLOC(char *, *nbmatrices);
+    if (argc == 1)
+        (*filename)[0] = NULL;
+    else {
+        for (i=0; i<argc-1; i++) {
+            (*filename)[i] = CALLOC(char, strlen(argv[i+1]));
+            strcpy((*filename)[i], argv[i+1]);
+        }
+    }
+
+    if (argc == 3) {
+        read_params_file((*filename)[1], nbthread, incomplete,
+                         level_of_fill, amalgamation, verbosemode, ooc);
+    }
+
+   return 0;
+}
+
+/* -------------------------------------------------------------------------- */
+
+int read_nx(char *filename, mwSize *nx)
+{
+    MATFile *pmat;
+    pmat = matOpen(filename, "r");
+
+    mxArray *mxA;
+    mxA  = matGetVariable(pmat, "A");
+
+   *nx = mxGetM(mxA);
+    mxDestroyArray(mxA);
+    matClose(pmat);
+}
+
+/* -------------------------------------------------------------------------- */
+
+int write_matlab_solution(char *fileName, char *varName, int nx, double *xvals)
+{
+    mxArray *xv;
+
+    MATFile *pmat = matOpen(fileName, "w");
+
+    xv = mxCreateDoubleMatrix(1, nx, mxREAL);
+
+    memcpy((void *)(mxGetPr(xv)), (void *)xvals, nx*sizeof(xvals));
+
+    matPutVariable(pmat, varName, xv);
+
+    matClose(pmat);
+}
+
+static void
+usage(int argc, char *argv[])
+{
+    fprintf( stderr,
+    "usage: mpirun -np <num_slots> %s <mat_file> [ <params_file> ]\n"
+            , argv[0] );
+}
+
+/* -------------------------------------------------------------------------- */
 
 void read_params_file(char *params_file, int *nbthread, int *incomplete,
-                             int *level_of_fill, int *amalgamation, 
+                             int *level_of_fill, int *amalgamation,
                              int *verbosemode, int *ooc)
 {
     FILE *fp;
@@ -376,67 +459,4 @@ error_return:
     return;
 
 }
-
-/*
- *   Function: get_options
- *
- *     Get options from argv.
- *
- *       Parameters:
- *           argc          - number of arguments.
- *           argv          - argument tabular.
- *           driver_type   - type of driver (output).
- *           filename      - Matrix filename (output).
- *           nbthread      - number of thread (left unchanged if not in options).
- *           verbose       - verbose level 1,2 or 3
- *           ordering      - ordering to choose (see <API_ORDER>).
- *           incomplete    - indicate if -incomp is present
- *           level_of_fill - Level of fill for incomplete factorization.
- *           amalgamation  - Amalgamation for kass.
- *           ooc           - Out-of-core limite (Mo or percent depending on compilation option)
- *           size          - Size of the matrix (generated matrix only)
- *
- *                                                        */
-int get_options(int              argc,
-                char           **argv,
-                driver_type_t  **driver_type,
-                char          ***filename,
-                int             *nbmatrices,
-                int             *nbthread,
-                int             *verbosemode,
-                int             *ordering,
-                int             *incomplete,
-                int             *level_of_fill,
-                int             *amalgamation,
-                int             *ooc,
-                pastix_int_t    *size)
-{
-    int i;
-   *driver_type = CALLOC(driver_type_t, 1);
-  (*driver_type)[0] = RSA;
-   *nbmatrices = 1;
-   *nbthread = 1;
-   *incomplete = 0;
-   *level_of_fill = -1;
-   *verbosemode = 1;
-   *ooc = 50000;
-   *amalgamation = 5;
-   *filename = CALLOC(char *, *nbmatrices);
-    if (argc == 1)
-        (*filename)[0] = NULL;
-    else {
-        for (i=0; i<argc-1; i++) {
-            (*filename)[i] = CALLOC(char, strlen(argv[i+1]));
-            strcpy((*filename)[i], argv[i+1]);
-        }
-    }
-
-    if (argc == 3) {
-        read_params_file((*filename)[1], nbthread, incomplete,
-                         level_of_fill, amalgamation, verbosemode, ooc);
-    }
-
-   return 0;
-}
-
 

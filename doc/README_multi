@@ -12,7 +12,7 @@ Listed below are several tips for building a distributed version of PaStiX:
        if [ -f /usr/local/INTEL2016.sh ]; then
             . /usr/local/INTEL2016.sh
        fi
-       export I_MPI_FABRICS=shm:ofa
+       export I_MPI_FABRICS=shm:tcp
        export I_MPI_FALLBACK=disable
 2) use Pastix that was compileed with options:
     -DFORCE_NOMPI
@@ -21,32 +21,32 @@ Listed below are several tips for building a distributed version of PaStiX:
    libptscotch.a  libptscotcherr.a  libptscotcherrexit.a
    (in addition to: libscotch.a  libscotcherr.a  libscotcherrexit.a)
 
-The compiled alignment code stored in ../../bin can be run in two modes: a 'non-split' and a 'plit' mode. In either case, the following environment variables are expected to be defined:
+The compiled alignment code stored in ../../bin can be run in two modes: a 'split' mode (default) and a 'nosplit' mode. In either case, the following environment variables are expected to be defined:
 TA_HOME, containing the full path to the folder 'bin', and
 TA_DATA, a writable directory from where the input MAT file(s) will be read and where the solution will be stored.
 The procedure described below shows how to run the code from within a qlogin session started using the command:
      qlogin -pe impi <num_workers> -now n
 where <num_workers> is the number of MPI workers to be used.
 
-1) Non-split mode: the same entire MAT file is used as input by each MPI worker.
-This mode makes use of the files: align_tiles, align_tiles.sh and run_align_tiles.sh.
-The command to run the code:
-    align_tiles.sh  <num_workers>  <input MAT file> [ <parameter file> ] 
-An example of the parameter file is /sample_data/align_multi_params.txt.
-    
-2) Split mode: each MPI worker is using as input a separate portion of the MAT file. Splitting of the original MAT file into <num_workers> portions can be performed by the provided Matlab script split_mat_file.m:
+1) Split mode: each MPI worker is using as input a separate portion of the MAT file. Splitting of the original MAT file into <num_workers> portions can be performed by the provided Matlab script split_mat_file.m:
     >> split_mat_file(<entire MAT file name>, <num_workers>)
-Given the entire MAT file  named <file_name>.mat, its portions will be named <file_name>_1.mat, <file_name>_2.mat, etc.
-This mode makes use of the files: align_tiles_split, align_tiles_split.sh and       run_align_tiles_split.sh. The command to run the code is:
-   align_tiles_split.sh  <num_workers>  <input MAT file> [ <parameter file> ]
+Given the entire MAT file named <file_name>.mat, its portions will be named <file_name>_1.mat, <file_name>_2.mat, etc.
+This mode makes use of the files: align_multi, align_multi.sh and run_align_multi.sh. The command to run the code is:
+   align_multi.sh  <num_workers>  <input MAT file> [ <parameter file> ]
 (Note that the name of the entire input MAT file is specified in this command, although the portions of this file will be actually used by the MPI workers, and the entire MAT file may even not exist). 
+
+2) Non-split mode: the same entire MAT file is used as input by each MPI worker.
+This mode makes use of the files: align_multi_nosplits, align_multi_nosplit.sh and run_align_multi_nosplit.sh.
+The command to run the code:
+    align_multi_nosplit.sh  <num_workers>  <input MAT file> [ <parameter file> ] 
+An example of the parameter file is /sample_data/align_multi_params.txt.
 
 The solution produced by either mode will be stored in the files 
     x_1.mat,  . , x_<num_workers>.mat 
-located in the folder TA_DATA.
+located in the folder $TA_DATA, or in the currect directory, if environmental variable TA_DATA is not defined.
 
 An example of running the code in the split mode on data located in folder TA_DATA=../../sample_data:
-    $TA_BIN/align_tiles_split.sh  3  $TA_DATA/ntiles34_axb.mat 
+    $TA_BIN/align_multi.sh  3  $TA_DATA/ntiles34_axb.mat 
 
 Console output :
 

@@ -29,7 +29,7 @@
  ** knowledge of the CeCILL-C license and that you accept its terms.
  */
 
-#include "common.h"
+#include "main.h"    
 
 int main (int argc, char **argv)
 {

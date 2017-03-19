@@ -1,8 +1,8 @@
 all : compile copy_scripts
 
-compile: align_multi.c align_multi_nosplit.c common.c common.h compile_align_multi.sh
+compile: align_multi.c align_multi_nosplit.c main.c main.h compile_all.sh
 	@mkdir -p ../../bin   
-	./compile_align_multi.sh
+	./compile_all.sh
 copy_scripts: align_multi.sh align_multi_nosplit.sh run_align_multi.sh run_align_multi_nosplit.sh
 	@mkdir -p ../../bin
 	cp     align_multi.sh         ../../bin

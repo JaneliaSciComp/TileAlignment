@@ -97,12 +97,12 @@ else
 fi;
 
 echo ""
-echo "$CC align_multi.c common.c $INC $LIBS $CCOPT $OPTS $BLAS  -o ../../bin/align_multi"
-mpicc align_multi.c         common.c $INC $LIBS $CCOPT $OPTS $BLAS  -o ../../bin/align_multi
+echo "$CC align_multi.c main.c $INC $LIBS $CCOPT $OPTS $BLAS  -o ../../bin/align_multi"
+mpicc align_multi.c         main.c $INC $LIBS $CCOPT $OPTS $BLAS  -o ../../bin/align_multi
 
 echo ""
-echo "$CC align_multi_nosplitr.c common.c $INC $LIBS $CCOPT $OPTS $BLAS  -o ../../bin/align_multi_nosplit"
-mpicc align_multi_nosplit.c common.c $INC $LIBS $CCOPT $OPTS $BLAS  -o ../../bin/align_multi_nosplit
+echo "$CC align_multi_nosplitr.c main.c $INC $LIBS $CCOPT $OPTS $BLAS  -o ../../bin/align_multi_nosplit"
+mpicc align_multi_nosplit.c main.c $INC $LIBS $CCOPT $OPTS $BLAS  -o ../../bin/align_multi_nosplit
 
 
 

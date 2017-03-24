@@ -188,12 +188,17 @@ int main (int argc, char **argv)
     {
       dparm[DPARM_EPSILON_REFINEMENT] = 1e-25;
     }
+  else {
+      dparm[DPARM_EPSILON_REFINEMENT] = 1e-12; 
+  }
   iparm[IPARM_REFINEMENT]          = API_RAF_GMRES;
+//iparm[IPARM_REFINEMENT]          = API_RAF_GRAD;
   iparm[IPARM_GMRES_IM]            = 25;
   iparm[IPARM_LEVEL_OF_FILL]       = -1;     // use Kass algorithm
   iparm[IPARM_RHS_MAKING]          = API_RHS_B;
   iparm[IPARM_START_TASK]          = API_TASK_ORDERING;
   iparm[IPARM_END_TASK]            = API_TASK_CLEAN;
+  iparm[IPARM_PRODUCE_STATS]       = API_YES;
 
   /* To save intermediate results */
 //iparm[IPARM_IO_STRATEGY] = API_IO_SAVE; // save steps 1 and 2; need to link ordergen and symbolgena to ordername and symbolname
@@ -243,7 +248,7 @@ int main (int argc, char **argv)
           ncol, colptr, rows, values, loc2glob,
           perm, NULL, rhs, 1, iparm, dparm);
   PRINT_RHS("SOL", rhs, ncol, mpid, iparm[IPARM_VERBOSE]);
-  CHECK_DIST_SOL(colptr, rows, values, rhs, ncol, loc2glob, globn, rhssaved_g);
+//CHECK_DIST_SOL(colptr, rows, values, rhs, ncol, loc2glob, globn, rhssaved_g);
 
 
   /* Compare thge result with Matlab's stored solution  */
@@ -282,6 +287,8 @@ int main (int argc, char **argv)
   }
 
   fprintf(stderr, "mpid=%d mat_file_name=%s\n", mpid, mat_file_name);                 
+
+//printf("\nRelative error=%f\n", DPARM_RELATIVE_ERROR);
 
   write_matlab_solution(mat_file_name, "x", num_coord, data);
   FREE(data);
@@ -342,7 +349,7 @@ int get_options(int              argc,
    *driver_type = CALLOC(driver_type_t, 1);
   (*driver_type)[0] = RSA;
    *nbmatrices = 1;
-   *nbthread = 32;
+   *nbthread = 2;
    *incomplete = 0;
    *level_of_fill = -1;
    *verbosemode = 1;

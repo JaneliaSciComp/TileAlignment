@@ -1,6 +1,6 @@
 /* Copyright (c) 2017, HHMI-Janelia Research Campus All rights reserved. */
 
-#include "common.h"
+#include "main.h"    
 
 int dread_matrix(char            *filename,
                 pastix_int_t    *ncol,
@@ -45,21 +45,22 @@ int dread_matrix(char            *filename,
 
         /* Read in the A array */
 //      fprintf(stdout, "Handling array A\n");
-        mxArray *mxA;
-        double  *pA;
+        mxArray *mxA, *mxbmax;
+        double  *pA, *pbmax;
         mwIndex *ir, *jc;
         mwSize   c, total=0;
         mwIndex  start_row_ind, stop_row_ind, ci;
         mwSize   m, n; // num rows and columns
 
         int col, row, prev_col;
-        double A;
+        double A, bmax;
         int num_col, num_val;
         int col_min, col_max, num_tiles, tiles_per_node, num_cols;
 
-        mxA = matGetVariable(pmat, "A");
-        m   = mxGetM(mxA);
-        n   = mxGetN(mxA);
+        mxbmax = matGetVariable(pmat, "bmax");
+        mxA  = matGetVariable(pmat, "A");
+        m    = mxGetM(mxA);
+        n    = mxGetN(mxA);
         tiles_per_node = round((float)m/6./(float)num_nodes);
         col_min = 1 + 6*(mpid * tiles_per_node);
         if (mpid < num_nodes-1) {
@@ -84,8 +85,11 @@ int dread_matrix(char            *filename,
 
         /* Get the starting positions of all data arrays. */
         pA = mxGetPr(mxA);
+        pbmax = mxGetPr(mxbmax);
         ir = mxGetIr(mxA);
         jc = mxGetJc(mxA);
+        bmax = pbmax[0];
+        printf("\nbmax=%f\n", bmax);
 
         /* Estimate the sizes of the matrices to be allocated */
         num_col = 0;
@@ -115,7 +119,7 @@ int dread_matrix(char            *filename,
                         continue;
 
                     (*rows)[num_val-1] = row;
-                    (*vals)[num_val-1] = A;
+                    (*vals)[num_val-1] = A/bmax;
 
                     if (prev_col < col) // new column
                     {
@@ -192,7 +196,7 @@ int dread_matrix(char            *filename,
 
         b = (pastix_float_t *)mxGetData(mxb);
         for (i=0; i< 6*num_tiles; i++)
-            (*rhs)[i] = b[i];
+            (*rhs)[i] = b[i]/bmax;
 
 /*      for (i=0; i<nb; i++)
             fprintf(stdout, "b[%d]=%6.6g\n", i+1, (*rhs)[i]);

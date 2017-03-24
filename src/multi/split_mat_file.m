@@ -5,6 +5,7 @@ function split_mat_file(input_mat_file, num_workers)
 
     mat = load(input_mat_file);
     num_col = size(mat.A, 2);
+    bmax = max(abs(mat.b));
     tiles_per_worker = round(num_col/6./num_workers);
     disp(['tiles_per_worker=' num2str(tiles_per_worker)]);
     for i=1:num_workers
@@ -20,5 +21,5 @@ function split_mat_file(input_mat_file, num_workers)
         A = mat.A(:, col_min:col_max);
         b = mat.b(col_min:col_max);
         disp(['    i=' num2str(i) ' size(A)=' num2str(size(A)) ' size(b)=' num2str(size(b))]);
-        save(output_mat_file, 'A', 'b', '-v7.3')
+        save(output_mat_file, 'A', 'b', 'bmax', '-v7.3')
     end

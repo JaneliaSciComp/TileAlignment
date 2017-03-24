@@ -59,8 +59,6 @@ An example of running the code in the split mode on data located in folder TA_DA
 
 Console output :
 
-MPI_Init_thread level = MPI_THREAD_MULTIPLE
-Check : Numbering               OK
 Check : Sort CSC                OK
 Check : Duplicates              OK
  +--------------------------------------------------------------------+
@@ -89,41 +87,40 @@ Check : Duplicates              OK
         INTEGER TYPE        :                   int32_t
         PASTIX_FLOAT TYPE   :                   double
  +--------------------------------------------------------------------+
-   Time to compute ordering                     0.00184 s
-Time to find the supernode (direct) 7.61e-05 s
-Number of supernode for direct factorization 49
+   Time to compute ordering                     0.00597 s
+Time to find the supernode (direct) 0.000103 s
+Number of supernode for direct factorization 47
 Level of fill = -1
-Amalgamation ratio = 50
-Time to compute scalar symbolic direct factorization  4.34e-05 s
-Scalar nnza = 1200 nnzlk = 2549, fillrate0 = 2.12
-Time to compute the amalgamation of supernodes 0.000102 s
-Number of cblk in the amalgamated symbol matrix = 10
-
-
-Number of block in the non patched symbol matrix = 30
-Number of non zero in the non patched symbol matrix = 3954, fillrate1 3.29
-Number of block in final symbol matrix = 30
-Number of non zero in final symbol matrix = 3954, fillrate2 3.29
-   Time to analyze                              0.000182 s
-   Number of nonzeros in factorized matrix      3786
-   Fill-in                                      3.155
-   Number of operations (LLt)                   104422
-   Prediction Time to factorize (AMD 6180  MKL) 8.75e-05 s
+Amalgamation ratio = 5
+Time to compute scalar symbolic direct factorization  6.2e-05 s
+Scalar nnza = 1200 nnzlk = 2649, fillrate0 = 2.21
+Time to compute the amalgamation of supernodes 7.68e-05 s
+Number of cblk in the amalgamated symbol matrix = 24
+Number of block in the non patched symbol matrix = 82
+Number of non zero in the non patched symbol matrix = 2937, fillrate1 2.45
+Number of block in final symbol matrix = 82
+Number of non zero in final symbol matrix = 2937, fillrate2 2.45
+   Time to analyze                              0.000233 s
+   Number of nonzeros in factorized matrix      2769
+   Fill-in                                      2.3075
+   Number of operations (LLt)                   60412
+   Prediction Time to factorize (AMD 6180  MKL) 7.42e-05 s
    --- Sopalin : Threads are binded                 ---
     - iteration 1 :
          time to solve                          0 s
-         total iteration time                   0.00438 s
-         error                                  9.0399e-11
+         total iteration time                   0.00119 s
+         error                                  8.8021e-11
     - iteration 2 :
          time to solve                          0 s
-         total iteration time                   0.00186 s
-         error                                  6.2426e-17
+         total iteration time                   0.00109 s
+         error                                  4.0193e-18
    Static pivoting                              0
    Inertia                                      204
-   Time to factorize                            0.0219 s
-   FLOPS during factorization                   4.5421 MFLOPS
-   Time to solve                                0.000771 s
-   Refinement                                   2 iterations, norm=6.24e-17
-   Time for refinement                          0.00831 s
-Precision : ||ax -b||/||b|| = 187167.80585613768199
+   Time to factorize                            0.0252 s
+   FLOPS during factorization                   2.282 MFLOPS
+   Time to solve                                0.000688 s
+   Refinement                                   2 iterations, norm=4.02e-18
+   Time for refinement                          0.00278 s
+   ||b-Ax||/||b||                               4.02e-18
+   max_i(|b-Ax|_i/(|b| + |A||x|)_i              2.77e-16
 
